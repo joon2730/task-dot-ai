@@ -22,11 +22,17 @@ class AppTheme {
     ),
 
     textTheme: GoogleFonts.openSansTextTheme().copyWith(
-      titleLarge: GoogleFonts.inter(
+      headlineLarge: GoogleFonts.inter(
         // Topbar
         color: AppColors.onSurface,
-        fontSize: AppFontSizes.lg,
-        fontWeight: AppFontWeights.bold,
+        fontSize: AppFontSizes.xxl,
+        fontWeight: AppFontWeights.extrabold,
+      ),
+      headlineSmall: GoogleFonts.inter(
+        // Topbar
+        color: AppColors.hint,
+        fontSize: AppFontSizes.sm,
+        fontWeight: AppFontWeights.semibold,
       ),
       titleMedium: GoogleFonts.openSans(
         // Task tile title

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'package:material_symbols_icons/symbols.dart';
 
-import 'package:tasket/app/constants.dart';
+// import 'package:tasket/app/constants.dart';
 import 'package:tasket/model/task.dart';
+import 'package:tasket/util/format.dart';
 import 'package:tasket/widget/list_view/subtask_list_view.dart';
 import 'package:tasket/widget/btn/check_btn.dart';
 import 'package:tasket/widget/label/icon_label.dart';
@@ -48,6 +49,16 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final task = widget.task;
+
+    if (task.isCompleted) {
+      Future.delayed(const Duration(seconds: 1), () {
+        if (!task.isCompleted || !mounted) return;
+        setState(() {
+          _opacity = 0.0;
+        });
+        widget.onComplete();
+      });
+    }
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 400),
       opacity: _opacity,
@@ -87,21 +98,11 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
                     CheckButton(
                       size: 28,
                       isChecked: task.isCompleted,
-                      onChanged: (val) {
+                      onChanged: (isChecked) {
                         setState(() {
-                          task.isCompleted = val;
-                          _opacity = val ? 0.4 : 1.0;
+                          task.isCompleted = isChecked;
+                          _opacity = isChecked ? 0.4 : 1.0;
                         });
-
-                        if (val) {
-                          Future.delayed(const Duration(seconds: 1), () {
-                            if (!task.isCompleted || !mounted) return;
-                            setState(() {
-                              _opacity = 0.0;
-                            });
-                            widget.onComplete();
-                          });
-                        }
                       },
                     ),
                     SizedBox(width: 12),
@@ -127,22 +128,7 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
                               AnimatedDefaultTextStyle(
                                 duration: Duration(milliseconds: 100),
                                 curve: Curves.easeInOut,
-                                style:
-                                    (_selected)
-                                        ? Theme.of(
-                                          context,
-                                        ).textTheme.titleMedium!.copyWith(
-                                          shadows: [
-                                            Shadow(
-                                              offset: Offset(0.0, 2.0),
-                                              blurRadius: 2.0,
-                                              color: Colors.black26,
-                                            ),
-                                          ],
-                                        )
-                                        : Theme.of(
-                                          context,
-                                        ).textTheme.titleMedium!,
+                                style: Theme.of(context).textTheme.titleMedium!,
                                 child: Text(task.title),
                               ),
                             ],
@@ -173,7 +159,9 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
                             IconLabel(
                               icon: Symbols.calendar_clock,
                               text:
-                                  '${task.diplayFormatDueOn} | ${task.formatDueIn}',
+                                  (_selected)
+                                      ? task.formalFormatDueOn
+                                      : '${task.readableFormatDueOn} | ${task.formatDueIn}',
                             ),
                         ],
                       ),
@@ -202,7 +190,18 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
                         children: [
                           const SizedBox(width: 40),
                           Expanded(
-                            child: SubtaskListView(subtasks: task.subtasks!),
+                            child: SubtaskListView(
+                              task.subtasks!,
+                              onChanged: (completedCounter) {
+                                print(completedCounter);
+                                final isCompleted =
+                                    completedCounter == task.subtasks!.length;
+                                setState(() {
+                                  task.isCompleted = isCompleted;
+                                  _opacity = isCompleted ? 0.4 : 1.0;
+                                });
+                              },
+                            ),
                           ),
                         ],
                       ),

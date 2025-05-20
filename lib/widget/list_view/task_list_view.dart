@@ -25,28 +25,36 @@ class TaskListView extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final taskListAsync = ref.watch(taskProvider);
     final listKey = useMemoized(() => GlobalKey<AnimatedListState>());
     final taskList = useState<TaskList?>(null);
 
+    Future<void> handleRefresh() async {
+      // Simulate a network call or update
+      taskList.value = null;
+      await ref.read(taskProvider.notifier).refresh();
+    }
+
     useEffect(() {
-      if (taskListAsync.hasValue) {
+      final taskAsync = ref.read(taskProvider);
+      if (taskAsync.hasValue) {
+        final tasks = taskAsync.value!;
+        // This block only sets taskList.value once, when it is null (first load).
         if (taskList.value == null) {
-          final tasks = taskListAsync.value!;
           taskList.value = TaskList(
             listKey: listKey,
             removedTaskBuilder: removedTaskBuilder,
             initialTasks: tasks..sort((a, b) => a.compareTo(b, method: 'auto')),
           );
         } else {
-          final newTasks = taskListAsync.value!.where((task) => !task.inList);
+          // This block runs on subsequent updates, but only adds tasks not already in the list.
+          final newTasks = tasks.where((task) => !task.inList);
           for (final newTask in newTasks) {
             taskList.value!.insertAt(0, newTask);
           }
         }
       }
       return null;
-    }, [taskListAsync]);
+    }, [ref.watch(taskProvider)]);
 
     Widget buildItem(
       BuildContext context,
@@ -67,22 +75,22 @@ class TaskListView extends HookConsumerWidget {
       );
     }
 
-    return taskListAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error:
-          (error, stackTrace) =>
-              const Center(child: Text('Something went wrong')),
-      data: (_) {
-        if (taskList.value == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return AnimatedList(
+    if (taskList.value == null) {
+      return const Center(child: CircularProgressIndicator());
+    } else {
+      return RefreshIndicator(
+        onRefresh: handleRefresh,
+        displacement: 40, // How far to pull before trigger
+        edgeOffset: 0, // Start right at the top
+        color: Theme.of(context).colorScheme.primary,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        child: AnimatedList(
           key: listKey,
           initialItemCount: taskList.value!.length,
           itemBuilder: buildItem,
           physics: const BouncingScrollPhysics(),
-        );
-      },
-    );
+        ),
+      );
+    }
   }
 }

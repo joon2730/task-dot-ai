@@ -60,7 +60,7 @@ String formatDurationUnit(DateTime dateTime, bool hasTime) {
       dateTime.month,
       dateTime.day,
     );
-    final days = targetMidnight.difference(todayMidnight).inDays;
+    final days = targetMidnight.difference(todayMidnight).inDays.abs();
     if (days == 0) return 'now';
     return '$days day${days > 1 ? 's' : ''}';
   } else if (duration.inHours >= 1) {
@@ -75,6 +75,10 @@ String formatDurationUnit(DateTime dateTime, bool hasTime) {
 
 String formatDateTime(DateTime dateTime, bool hasTime) {
   return hasTime
-      ? DateFormat('yyyy-MM-dd HH:mm').format(dateTime)
+      ? DateFormat('yyyy-MM-dd • h:mm a').format(dateTime)
       : DateFormat('yyyy-MM-dd').format(dateTime);
+}
+
+String formatReadableDate(DateTime dateTime) {
+  return DateFormat('E, MMM d').format(dateTime);
 }

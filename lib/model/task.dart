@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 import 'package:tasket/model/task_patch.dart';
+import 'package:tasket/model/subtask.dart';
 import 'package:tasket/util/format.dart';
 
 class Task {
@@ -13,7 +14,7 @@ class Task {
   DateTime? dueOn;
   bool? hasTime;
   String? note;
-  List<Map<String, Object>>? subtasks; // {'title': String, 'isChecked': Bool}
+  List<Subtask>? subtasks;
   // not saved to db
   bool isNew;
   bool isUpdated;
@@ -51,9 +52,7 @@ class Task {
       hasTime: json['hasTime'] as bool?,
       note: json['note'],
       subtasks:
-          (json['subtasks'] as List?)
-              ?.map((e) => Map<String, Object>.from(e))
-              .toList(),
+          (json['subtasks'] as List?)?.map((e) => Subtask.fromJson(e)).toList(),
     );
   }
 
@@ -64,7 +63,7 @@ class Task {
     }
     if (note != null) data['note'] = note;
     if (subtasks != null) {
-      data['subtasks'] = subtasks!.map((subtask) => subtask['title']).toList();
+      data['subtasks'] = subtasks!.map((subtask) => subtask.title).toList();
     }
     return data;
   }
@@ -80,11 +79,8 @@ class Task {
     note = patch.note ?? note;
     if (patch.subtasks != null) {
       subtasks =
-          (subtasks ?? [])..addAll(
-            patch.subtasks!
-                .map((title) => {'title': title, 'isChecked': false})
-                .toList(),
-          );
+          (subtasks ?? [])
+            ..addAll(patch.subtasks!.map((title) => Subtask(title)).toList());
     }
   }
 
@@ -105,20 +101,23 @@ class Task {
 
   String get formatDueOn {
     if (dueOn == null) return '';
-
     return formatDateTime(dueOn!, hasTime!);
   }
 
-  String get diplayFormatDueOn {
+  String get readableFormatDueOn {
     if (dueOn == null) return '';
-
     final time = hasTime! ? DateFormat('h:mm a').format(dueOn!) : '';
     return '${formatRelativeWeekday(dueOn!)}${hasTime! ? ', $time' : ''}';
   }
 
+  String get formalFormatDueOn {
+    if (dueOn == null) return '';
+    return formatDateTime(dueOn!, hasTime!);
+  }
+
   int get uncompletedSubtasksCount {
     if (subtasks == null) return 0;
-    return subtasks!.where((subtask) => subtask['isChecked'] == false).length;
+    return subtasks!.where((subtask) => subtask.isCompleted == false).length;
   }
 
   int get priorityScore {

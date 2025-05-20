@@ -31,6 +31,11 @@ class TaskNotifier extends AsyncNotifier<List<Task>> {
       );
     }
   }
+
+  Future<void> refresh() async {
+    final dataSevice = ref.read(dataServiceProvider)!; // must be logged in
+    state = AsyncValue.data(await dataSevice.loadTasks());
+  }
 }
 
 final taskProvider = AsyncNotifierProvider<TaskNotifier, List<Task>>(

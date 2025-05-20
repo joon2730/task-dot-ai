@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 
 import 'package:tasket/widget/btn/check_btn.dart';
+import 'package:tasket/model/subtask.dart';
 
 class SubtaskTile extends StatefulWidget {
-  const SubtaskTile({super.key, required this.subtask});
+  final Subtask subtask;
+  final ValueChanged<bool>? onChanged;
 
-  final Map subtask;
+  const SubtaskTile(this.subtask, {super.key, this.onChanged});
 
   @override
   State<SubtaskTile> createState() => _SubtaskTileState();
 }
 
 class _SubtaskTileState extends State<SubtaskTile> {
-  late bool isChecked;
+  late bool isCompleted;
 
   @override
   void initState() {
     super.initState();
-    isChecked = widget.subtask['isChecked'];
+    isCompleted = widget.subtask.isCompleted;
   }
 
   @override
@@ -44,14 +46,14 @@ class _SubtaskTileState extends State<SubtaskTile> {
                     ),
                     SizedBox(width: 12),
                     Text(
-                      widget.subtask['title']!,
+                      widget.subtask.title,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         decoration:
-                            isChecked
+                            isCompleted
                                 ? TextDecoration.lineThrough
                                 : TextDecoration.none,
                         color:
-                            isChecked
+                            isCompleted
                                 ? Theme.of(context).colorScheme.onSurfaceVariant
                                 : Theme.of(context).textTheme.bodyLarge?.color,
                       ),
@@ -61,11 +63,13 @@ class _SubtaskTileState extends State<SubtaskTile> {
                 SizedBox(
                   width: 28,
                   child: CheckButton(
-                    isChecked: isChecked,
-                    onChanged: (val) {
+                    isChecked: isCompleted,
+                    onChanged: (isChecked) {
                       setState(() {
-                        isChecked = val;
+                        isCompleted = isChecked;
                       });
+                      widget.onChanged?.call(isChecked);
+                      widget.subtask.isCompleted = isChecked;
                     },
                     size: 28,
                   ),
