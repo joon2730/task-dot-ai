@@ -17,6 +17,7 @@ class AuthService {
   }
 
   Future<User?> googleLogin() async {
+    print('google');
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) return null;

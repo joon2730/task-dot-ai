@@ -22,16 +22,26 @@ class AppTheme {
     ),
 
     textTheme: GoogleFonts.openSansTextTheme().copyWith(
-      headlineLarge: GoogleFonts.inter(
-        // Topbar
-        color: AppColors.onSurface,
-        fontSize: AppFontSizes.xxl,
+      displayLarge: GoogleFonts.ptSans(
+        color: AppColors.primary,
+        fontSize: 48,
         fontWeight: AppFontWeights.extrabold,
       ),
-      headlineSmall: GoogleFonts.inter(
+      displayMedium: GoogleFonts.ptSans(
+        color: AppColors.hint,
+        fontSize: 36,
+        fontWeight: AppFontWeights.extrabold,
+      ),
+      headlineLarge: GoogleFonts.ptSans(
+        // Topbar
+        color: AppColors.onSurface,
+        fontSize: 36,
+        fontWeight: AppFontWeights.extrabold,
+      ),
+      headlineSmall: GoogleFonts.openSans(
         // Topbar
         color: AppColors.hint,
-        fontSize: AppFontSizes.sm,
+        fontSize: AppFontSizes.md,
         fontWeight: AppFontWeights.semibold,
       ),
       titleMedium: GoogleFonts.openSans(

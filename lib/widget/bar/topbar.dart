@@ -14,7 +14,7 @@ class TopBar extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tasksAsync = ref.watch(taskProvider);
     return SliverAppBar(
-      toolbarHeight: 86,
+      toolbarHeight: 100,
       forceElevated: innerBoxIsScrolled,
       flexibleSpace: SafeArea(
         child: Padding(

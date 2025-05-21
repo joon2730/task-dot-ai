@@ -79,7 +79,9 @@ class TaskPatch {
                 (title) => {'title': title, 'isChecked': false},
               )
               .toList();
-      if (origin != null) data['subtasks'].addAll(origin.subtasks);
+      if (origin != null && origin.subtasks != null) {
+        data['subtasks'].addAll(origin.subtasks);
+      }
     }
 
     if (op == 'create') data['createdAt'] = FieldValue.serverTimestamp();

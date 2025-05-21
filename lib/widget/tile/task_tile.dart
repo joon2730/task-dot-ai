@@ -4,7 +4,6 @@ import 'package:material_symbols_icons/symbols.dart';
 
 // import 'package:tasket/app/constants.dart';
 import 'package:tasket/model/task.dart';
-import 'package:tasket/util/format.dart';
 import 'package:tasket/widget/list_view/subtask_list_view.dart';
 import 'package:tasket/widget/btn/check_btn.dart';
 import 'package:tasket/widget/label/icon_label.dart';
@@ -125,11 +124,23 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
                                   color: Colors.deepOrange,
                                 ),
 
-                              AnimatedDefaultTextStyle(
-                                duration: Duration(milliseconds: 100),
-                                curve: Curves.easeInOut,
-                                style: Theme.of(context).textTheme.titleMedium!,
-                                child: Text(task.title),
+                              Expanded(
+                                child: AnimatedSize(
+                                  duration: const Duration(milliseconds: 200),
+                                  curve: Curves.easeInCirc,
+                                  alignment: Alignment.topLeft,
+                                  child: Text(
+                                    task.title,
+                                    softWrap: true,
+                                    overflow:
+                                        _selected
+                                            ? TextOverflow.visible
+                                            : TextOverflow.ellipsis,
+                                    maxLines: _selected ? null : 1,
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -193,7 +204,6 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
                             child: SubtaskListView(
                               task.subtasks!,
                               onChanged: (completedCounter) {
-                                print(completedCounter);
                                 final isCompleted =
                                     completedCounter == task.subtasks!.length;
                                 setState(() {

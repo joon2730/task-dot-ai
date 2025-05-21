@@ -15,23 +15,28 @@ class Root extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userStreamProvider);
 
-    return userAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Move ScaffoldMessenger logic out of build phase using Future.microtask
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder:
+          (child, animation) =>
+              FadeTransition(opacity: animation, child: child),
+      child: userAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(topSnackbar("Authentication failed."));
-        });
-        return const LoginScreen(); // fallback UI
-      },
-      data: (user) {
-        if (user == null) {
-          return const LoginScreen();
-        } else {
-          return const HomeScreen();
-        }
-      },
+          return const LoginScreen(key: ValueKey('login'));
+        },
+        data: (user) {
+          if (user == null) {
+            return const LoginScreen(key: ValueKey('login'));
+          } else {
+            return const HomeScreen(key: ValueKey('home'));
+          }
+        },
+      ),
     );
   }
 }
