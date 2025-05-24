@@ -2,7 +2,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:tasket/provider/service_provider.dart';
 import 'package:tasket/model/task.dart';
-import 'package:tasket/model/task_patch.dart';
 
 class TaskNotifier extends AsyncNotifier<List<Task>> {
   @override
@@ -11,33 +10,48 @@ class TaskNotifier extends AsyncNotifier<List<Task>> {
     return await dataSevice.loadTasks();
   }
 
-  Future<void> applyTaskPatches(List<TaskPatch> patches) async {
+  void createTask(Task task) {
+    state = AsyncValue.data([task]);
     final dataSevice = ref.read(dataServiceProvider)!;
-    if (state.hasValue) {
-      var current = state.value!;
-      for (final patch in patches) {
-        current = await dataSevice.applyPatch(patch, current);
-      }
-      state = AsyncValue.data(current);
-    }
+    dataSevice.createTask(task);
   }
 
-  Future<void> deleteTask(String id) async {
+  void updateTask(Task task) {
     final dataSevice = ref.read(dataServiceProvider)!;
-    dataSevice.deleteTask(id);
-    if (state.hasValue) {
-      state = AsyncValue.data(
-        state.value!.where((task) => task.id != id).toList(),
+    dataSevice.updatetTask(task);
+  }
+
+  void completeTask(Task task) {
+    final dataSevice = ref.read(dataServiceProvider)!;
+    if (task.repeat != null) {
+      // handle repetition
+      final nextDue = task.repeat!.getNextOccurrence(
+        task.dueOn ?? DateTime.now(),
       );
+      if (nextDue != null) {
+        task.dueOn = nextDue;
+        state = AsyncValue.data([
+          task
+            ..inList = false
+            ..isNew = true,
+        ]);
+        dataSevice.updatetTask(task);
+        return;
+      }
     }
+    state = AsyncValue.data([]);
+    dataSevice.deleteTask(task.id!);
   }
 
   Future<void> refresh() async {
     final dataSevice = ref.read(dataServiceProvider)!; // must be logged in
     state = AsyncValue.data(await dataSevice.loadTasks());
+    ref.read(selectedTaskProvider.notifier).state = null;
   }
 }
 
 final taskProvider = AsyncNotifierProvider<TaskNotifier, List<Task>>(
   TaskNotifier.new,
 );
+
+final selectedTaskProvider = StateProvider<Task?>((_) => null);

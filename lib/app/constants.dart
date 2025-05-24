@@ -9,6 +9,7 @@ final class AppColors {
   static const hint = Color(0xFF888888);
   static const shadow = Color.fromARGB(255, 208, 208, 208);
   static const faint = Color(0xFFBCBCBC);
+  static const focused = Color(0xFFBCBCBC);
 }
 
 final class AppFontSizes {

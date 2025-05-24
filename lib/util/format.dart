@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-String formatRelativeWeekday(DateTime target) {
+String readableDayLabel(DateTime target) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final targetDate = DateTime(target.year, target.month, target.day);
@@ -50,7 +50,7 @@ String formatRelativeWeekday(DateTime target) {
   return DateFormat('MMM d, E').format(targetDate);
 }
 
-String formatDurationUnit(DateTime dateTime, bool hasTime) {
+String readableTimeDelta(DateTime dateTime, bool hasTime) {
   final now = DateTime.now();
   final duration = dateTime.difference(now).abs();
   if (duration.inHours >= 24 || !hasTime) {
@@ -79,6 +79,32 @@ String formatDateTime(DateTime dateTime, bool hasTime) {
       : DateFormat('yyyy-MM-dd').format(dateTime);
 }
 
-String formatReadableDate(DateTime dateTime) {
-  return DateFormat('E, MMM d').format(dateTime);
+String ordinal(int n) {
+  if (n >= 11 && n <= 13) return '${n}th';
+  switch (n % 10) {
+    case 1:
+      return '${n}st';
+    case 2:
+      return '${n}nd';
+    case 3:
+      return '${n}rd';
+    default:
+      return '${n}th';
+  }
+}
+
+DateTime nextWeekdayDate(String weekday) {
+  // Helper for getting any date with the correct weekday for formatting
+  const weekdayMap = {
+    'mon': DateTime.monday,
+    'tue': DateTime.tuesday,
+    'wed': DateTime.wednesday,
+    'thu': DateTime.thursday,
+    'fri': DateTime.friday,
+    'sat': DateTime.saturday,
+    'sun': DateTime.sunday,
+  };
+  final now = DateTime.now();
+  final target = weekdayMap[weekday.toLowerCase()] ?? DateTime.monday;
+  return now.add(Duration(days: (target - now.weekday) % 7));
 }

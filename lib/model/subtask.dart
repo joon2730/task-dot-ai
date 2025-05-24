@@ -10,4 +10,8 @@ class Subtask {
       isCompleted: json['isCompleted'] as bool? ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {'title': title, 'isCompleted': isCompleted};
+  }
 }

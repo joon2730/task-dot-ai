@@ -11,7 +11,7 @@ class AppTheme {
       brightness: Brightness.light,
       primary: AppColors.primary,
       onPrimary: AppColors.surface,
-      secondary: AppColors.secondary,
+      secondary: Colors.orangeAccent,
       onSecondary: AppColors.surface,
       error: AppColors.error,
       onError: AppColors.surface,
@@ -19,6 +19,7 @@ class AppTheme {
       onSurface: AppColors.onSurface,
       onSurfaceVariant: AppColors.hint,
       shadow: AppColors.shadow,
+      surfaceDim: const Color(0xFFdddddd),
     ),
 
     textTheme: GoogleFonts.openSansTextTheme().copyWith(

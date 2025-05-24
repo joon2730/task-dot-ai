@@ -1,66 +1,71 @@
 import 'package:flutter/material.dart';
 
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
 // import 'package:tasket/app/constants.dart';
+// import 'package:tasket/provider/service_provider.dart';
 import 'package:tasket/model/task.dart';
+import 'package:tasket/provider/task_provider.dart';
 import 'package:tasket/widget/list_view/subtask_list_view.dart';
 import 'package:tasket/widget/btn/check_btn.dart';
 import 'package:tasket/widget/label/icon_label.dart';
 import 'package:tasket/widget/label/box_label.dart';
 
-class TaskTile extends StatefulWidget {
+class TaskTile extends HookConsumerWidget {
   final Task task;
   final VoidCallback onComplete;
 
   const TaskTile({super.key, required this.task, required this.onComplete});
 
   @override
-  State<TaskTile> createState() => _TaskTileState();
-}
-
-class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
-  bool _selected = false;
-  double _opacity = 1.0;
-
-  late final AnimationController _controller;
-  late final Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final expanded = useState(false);
+    final toRemove = useState(false);
+    final update = useState(0);
+    final controller = useAnimationController(
       duration: const Duration(milliseconds: 300),
-      vsync: this,
     );
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
+    final fadeAnimation = CurvedAnimation(
+      parent: controller,
       curve: Curves.easeInOut,
     );
-  }
+    final task = this.task;
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+    useEffect(() {
+      final selected = (ref.read(selectedTaskProvider)?.id == task.id);
+      if (selected || task.isNew || task.isUpdated) {
+        expanded.value = true;
+      } else {
+        expanded.value = false;
+      }
+      if (expanded.value) {
+        controller.forward();
+      } else {
+        controller.reverse();
+      }
+      return null;
+    }, [ref.watch(selectedTaskProvider)]);
 
-  @override
-  Widget build(BuildContext context) {
-    final task = widget.task;
-
-    if (task.isCompleted) {
-      Future.delayed(const Duration(seconds: 1), () {
-        if (!task.isCompleted || !mounted) return;
-        setState(() {
-          _opacity = 0.0;
+    useEffect(() {
+      if (toRemove.value) {
+        Future.delayed(const Duration(seconds: 1), () {
+          if (context.mounted) {
+            if (!toRemove.value) return;
+            if (ref.read(selectedTaskProvider)?.id == task.id) {
+              ref.read(selectedTaskProvider.notifier).state = null;
+            }
+            onComplete();
+          }
         });
-        widget.onComplete();
-      });
-    }
+      }
+      return null;
+    }, [toRemove.value]);
+
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 400),
-      opacity: _opacity,
+      opacity: (toRemove.value) ? 0.4 : 1.0,
       child: Container(
         decoration: const BoxDecoration(
           border: Border(
@@ -75,33 +80,33 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
             InkWell(
               borderRadius: BorderRadius.circular(8),
               onTap: () {
-                setState(() {
-                  _selected = !_selected;
-                  if (_selected) {
-                    _controller.forward();
-                  } else {
-                    task.isNew = false;
-                    task.isUpdated = false;
-                    _controller.reverse();
-                  }
-                });
+                task.isNew = false;
+                task.isUpdated = false;
+                if (ref.read(selectedTaskProvider)?.id == task.id) {
+                  ref.read(selectedTaskProvider.notifier).state = null;
+                } else {
+                  ref.read(selectedTaskProvider.notifier).state = task;
+                }
               },
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
                 ),
+                color:
+                    (ref.read(selectedTaskProvider)?.id == task.id)
+                        ? Theme.of(context).colorScheme.surfaceDim
+                        : Theme.of(context).colorScheme.surface,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CheckButton(
                       size: 28,
-                      isChecked: task.isCompleted,
+                      isChecked: toRemove.value,
                       onChanged: (isChecked) {
-                        setState(() {
-                          task.isCompleted = isChecked;
-                          _opacity = isChecked ? 0.4 : 1.0;
-                        });
+                        toRemove.value = isChecked;
                       },
                     ),
                     SizedBox(width: 12),
@@ -110,38 +115,51 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (task.isNew)
-                                BoxLabel(
-                                  text: 'new',
-                                  color: const Color.fromARGB(255, 220, 165, 0),
-                                ),
-                              if (task.isUpdated)
-                                BoxLabel(
-                                  text: 'updated',
-                                  color: Colors.deepOrange,
-                                ),
-
-                              Expanded(
-                                child: AnimatedSize(
-                                  duration: const Duration(milliseconds: 200),
-                                  curve: Curves.easeInCirc,
-                                  alignment: Alignment.topLeft,
-                                  child: Text(
-                                    task.title,
-                                    softWrap: true,
-                                    overflow:
-                                        _selected
-                                            ? TextOverflow.visible
-                                            : TextOverflow.ellipsis,
-                                    maxLines: _selected ? null : 1,
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
-                                  ),
+                              AnimatedSize(
+                                duration: const Duration(milliseconds: 200),
+                                curve: Curves.easeInCirc,
+                                alignment: Alignment.topLeft,
+                                child: Text(
+                                  task.title,
+                                  softWrap: true,
+                                  overflow:
+                                      expanded.value
+                                          ? TextOverflow.visible
+                                          : TextOverflow.ellipsis,
+                                  maxLines: expanded.value ? null : 2,
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium,
                                 ),
                               ),
+                              if (task.isNew) ...[
+                                SizedBox(width: 6),
+                                BoxLabel(
+                                  Text(
+                                    "new",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  color: const Color(0xFFFFAB00),
+                                ),
+                              ],
+                              if (task.isUpdated) ...[
+                                SizedBox(width: 6),
+                                BoxLabel(
+                                  Text(
+                                    "edited",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  color: Colors.deepOrange,
+                                ),
+                              ],
                             ],
                           ),
                           if (task.note != null) ...[
@@ -151,27 +169,33 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
                               alignment: Alignment.topLeft,
                               child: Text(
                                 task.note!,
-                                maxLines: _selected ? null : 1,
+                                maxLines: expanded.value ? null : 1,
                                 overflow:
-                                    _selected
+                                    expanded.value
                                         ? TextOverflow.visible
                                         : TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ),
                           ],
-                          if (task.subtasks != null)
+                          if (task.subtasks != null &&
+                              task.subtasks!.isNotEmpty)
                             IconLabel(
                               icon: Symbols.format_list_bulleted,
                               text:
                                   "${task.uncompletedSubtasksCount} uncompleted",
                             ),
+                          if (task.repeat != null)
+                            IconLabel(
+                              icon: Symbols.autorenew,
+                              text: task.repeat!.formatRepeatRule,
+                            ),
                           if (task.dueOn != null)
                             IconLabel(
                               icon: Symbols.calendar_clock,
                               text:
-                                  (_selected)
-                                      ? task.formalFormatDueOn
+                                  (expanded.value)
+                                      ? '${task.formalFormatDueOn} | ${task.formatDueIn}'
                                       : '${task.readableFormatDueOn} | ${task.formatDueIn}',
                             ),
                         ],
@@ -186,15 +210,14 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInCirc,
                 child: SizeTransition(
-                  sizeFactor: _fadeAnimation,
+                  sizeFactor: fadeAnimation,
                   axisAlignment: -1.0,
                   child: FadeTransition(
-                    opacity: _fadeAnimation,
+                    opacity: fadeAnimation,
                     child: Container(
-                      padding: const EdgeInsets.only(
-                        left: 16,
-                        right: 16,
-                        bottom: 8,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -204,12 +227,16 @@ class _TaskTileState extends State<TaskTile> with TickerProviderStateMixin {
                             child: SubtaskListView(
                               task.subtasks!,
                               onChanged: (completedCounter) {
+                                // handle save subtask change
+                                update.value++;
+                                task.logModified('subtasks');
+                                ref
+                                    .read(taskProvider.notifier)
+                                    .updateTask(task);
+                                // handle task completion
                                 final isCompleted =
                                     completedCounter == task.subtasks!.length;
-                                setState(() {
-                                  task.isCompleted = isCompleted;
-                                  _opacity = isCompleted ? 0.4 : 1.0;
-                                });
+                                toRemove.value = isCompleted;
                               },
                             ),
                           ),

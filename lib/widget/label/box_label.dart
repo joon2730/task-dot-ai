@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 class BoxLabel extends StatelessWidget {
-  const BoxLabel({super.key, required this.text, required this.color});
+  const BoxLabel(this.content, {super.key, this.color = Colors.black});
 
-  final String text;
+  final Widget content;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedSize(
-      duration: Duration(milliseconds: 300),
+      duration: Duration(milliseconds: 600),
       curve: Curves.easeInCirc,
       child: Row(
         children: [
@@ -20,12 +20,7 @@ class BoxLabel extends StatelessWidget {
               borderRadius: BorderRadius.circular(12.0),
             ),
             alignment: Alignment.center,
-            child: Text(
-              text,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.white),
-            ),
+            child: content,
           ),
           SizedBox(width: 4),
         ],

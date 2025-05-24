@@ -25,7 +25,7 @@ class _SubtaskTileState extends State<SubtaskTile> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
@@ -44,7 +44,7 @@ class _SubtaskTileState extends State<SubtaskTile> {
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    SizedBox(width: 12),
+                    SizedBox(width: 8),
                     Text(
                       widget.subtask.title,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -68,8 +68,8 @@ class _SubtaskTileState extends State<SubtaskTile> {
                       setState(() {
                         isCompleted = isChecked;
                       });
-                      widget.onChanged?.call(isChecked);
                       widget.subtask.isCompleted = isChecked;
+                      widget.onChanged?.call(isChecked);
                     },
                     size: 28,
                   ),

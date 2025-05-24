@@ -38,6 +38,7 @@ class TaskListView extends HookConsumerWidget {
       final taskAsync = ref.read(taskProvider);
       if (taskAsync.hasValue) {
         final tasks = taskAsync.value!;
+        // print(tasks.map((e) => e.title).toList());
         // This block only sets taskList.value once, when it is null (first load).
         if (taskList.value == null) {
           taskList.value = TaskList(
@@ -68,8 +69,10 @@ class TaskListView extends HookConsumerWidget {
           key: ValueKey(task.id),
           task: task,
           onComplete: () {
-            final removedTask = taskList.value!.removeAt(index);
-            ref.read(taskProvider.notifier).deleteTask(removedTask.id);
+            final removedTask = taskList.value!.removeAt(
+              taskList.value!.indexOf(task),
+            );
+            ref.read(taskProvider.notifier).completeTask(removedTask);
           },
         ),
       );
@@ -80,8 +83,8 @@ class TaskListView extends HookConsumerWidget {
     } else {
       return RefreshIndicator(
         onRefresh: handleRefresh,
-        displacement: 40, // How far to pull before trigger
-        edgeOffset: 0, // Start right at the top
+        displacement: 120, // How far to pull before trigger
+        edgeOffset: 80,
         color: Theme.of(context).colorScheme.primary,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         child: AnimatedList(

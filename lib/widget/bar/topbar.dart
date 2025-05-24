@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'package:tasket/util/format.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
+
 import 'package:tasket/widget/popup/menu.dart';
 import 'package:tasket/provider/task_provider.dart';
 
@@ -35,7 +36,7 @@ class TopBar extends HookConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          formatReadableDate(DateTime.now()),
+                          DateFormat('E, MMM d').format(DateTime.now()),
                           style: Theme.of(context).textTheme.headlineLarge,
                         ),
                         if (tasksAsync.hasValue)
@@ -45,24 +46,15 @@ class TopBar extends HookConsumerWidget {
                           ),
                       ],
                     ),
-                    // SizedBox(
-                    //   width: 24,
-                    //   height: 32,
-                    //   child: Icon(
-                    //     Icons.keyboard_arrow_down,
-                    //     size: 20,
-                    //     color: Theme.of(context).colorScheme.primary,
-                    //   ),
-                    // ),
                   ],
                 ),
               ),
               IconButton(
                 padding: EdgeInsets.zero,
                 icon: Icon(
-                  Icons.more_vert,
+                  Icons.settings,
                   size: 24,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 onPressed: () {
                   FocusManager.instance.primaryFocus?.unfocus();
