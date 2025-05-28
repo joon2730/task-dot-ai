@@ -1,16 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 // import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-// import 'package:material_symbols_icons/symbols.dart';
-
-import 'package:google_fonts/google_fonts.dart';
 
 import 'package:tasket/provider/service_provider.dart';
 import 'package:tasket/widget/btn/login_btn.dart';
-
 import 'package:tasket/app/constants.dart';
+import 'package:tasket/util/alert.dart';
+import 'package:tasket/util/exception.dart';
 
 class LoginScreen extends StatefulHookConsumerWidget {
   const LoginScreen({super.key});
@@ -36,6 +35,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.read(authServiceProvider);
+
+    Future<void> handleSigninSignup(
+      Future<UserCredential> Function() loginMethod,
+    ) async {
+      try {
+        final userCredential = await loginMethod();
+        if (context.mounted) {
+          if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+            showInfoAlert(context, 'Welcome!');
+            await ref.read(dataServiceProvider)!.insertDemoTasks();
+          } else {
+            showInfoAlert(context, 'Successfully signed in!');
+          }
+        }
+      } catch (e) {
+        if (context.mounted) {
+          handleException(context, e);
+        }
+        return;
+      }
+    }
 
     return Scaffold(
       body: GestureDetector(
@@ -63,9 +83,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Task.ai',
-                            style: Theme.of(context).textTheme.displayLarge,
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 4,
+                              horizontal: 16,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.horizontal(
+                                right: Radius.circular(18),
+                              ),
+                            ),
+                            child: Text(
+                              'Tasket',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.displayLarge?.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
                           ),
                           SizedBox(height: 10),
                           Text(
@@ -91,6 +127,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       icon: Icon(
                                         FontAwesomeIcons.google,
                                         size: 24,
+                                        color: Color(0xFF787878),
                                       ),
                                       text: Text(
                                         'Continue with Google',
@@ -99,7 +136,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                               context,
                                             ).textTheme.bodyMedium,
                                       ),
-                                      loginMethod: auth.googleLogin,
+                                      onPressed: () async {
+                                        await handleSigninSignup(
+                                          auth.googleLogin,
+                                        );
+                                      },
                                       backgroundColor: Colors.white,
                                     ),
                                     const SizedBox(height: 20),
@@ -116,8 +157,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                             .bodyMedium!
                                             .copyWith(color: Colors.white),
                                       ),
-                                      loginMethod: auth.anonLogin,
-                                      backgroundColor: Color(0xFF979797),
+                                      onPressed: () async {
+                                        await handleSigninSignup(
+                                          auth.appleLogin,
+                                        );
+                                      },
+                                      backgroundColor: Color(0xFF787878),
                                     ),
                                   ],
                                 ),

@@ -16,4 +16,7 @@ final dataServiceProvider = Provider<DataService?>((ref) {
   return (user != null) ? DataService(userId: user.uid) : null;
 });
 
-final aiServiceProvider = Provider<AIService>((ref) => AIService());
+final aiServiceProvider = Provider<AIService?>((ref) {
+  final user = ref.watch(userStreamProvider).value;
+  return (user != null) ? AIService(userId: user.uid) : null;
+});

@@ -22,7 +22,6 @@ class TaskList {
   AnimatedListState? get _animatedList => listKey.currentState;
 
   void insertAt(int index, Task task) {
-    task.inList = true;
     _tasks.insert(index, task);
     _animatedList?.insertItem(index);
   }

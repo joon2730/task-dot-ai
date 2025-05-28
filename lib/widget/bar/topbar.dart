@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import 'package:tasket/widget/popup/menu.dart';
 import 'package:tasket/provider/task_provider.dart';
@@ -13,7 +14,7 @@ class TopBar extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tasksAsync = ref.watch(taskProvider);
+    final totalTasksAsync = ref.watch(taskProvider);
     return SliverAppBar(
       toolbarHeight: 100,
       forceElevated: innerBoxIsScrolled,
@@ -36,12 +37,12 @@ class TopBar extends HookConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          DateFormat('E, MMM d').format(DateTime.now()),
+                          'All Tasks',
                           style: Theme.of(context).textTheme.headlineLarge,
                         ),
-                        if (tasksAsync.hasValue)
+                        if (totalTasksAsync.hasValue)
                           Text(
-                            '${tasksAsync.value?.length} total tasks',
+                            '${DateFormat('E, MMM d').format(DateTime.now())} • total ${totalTasksAsync.value} tasks',
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
                       ],
@@ -52,9 +53,10 @@ class TopBar extends HookConsumerWidget {
               IconButton(
                 padding: EdgeInsets.zero,
                 icon: Icon(
-                  Icons.settings,
+                  Symbols.more_vert,
                   size: 24,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  weight: 800,
                 ),
                 onPressed: () {
                   FocusManager.instance.primaryFocus?.unfocus();

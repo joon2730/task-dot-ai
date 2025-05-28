@@ -1,6 +1,3 @@
-import 'package:intl/intl.dart';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tasket/util/format.dart';
 
 class RepeatRule {
@@ -30,7 +27,7 @@ class RepeatRule {
           (json['weekdays'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList(),
-      days: json['days'] as List<int>?,
+      days: (json['days'] as List<dynamic>?)?.map((e) => e as int).toList(),
       time: json['time'] as String?,
       startDate:
           json['startDate'] != null
@@ -51,7 +48,7 @@ class RepeatRule {
           (json['weekdays'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList(),
-      days: json['days'] as List<int>?,
+      days: (json['days'] as List<dynamic>?)?.map((e) => e as int).toList(),
       time: json['time'] as String?,
       startDate: json['startDate']?.toDate().toLocal(),
       endDate: json['endDate']?.toDate().toLocal(),
@@ -158,10 +155,13 @@ class RepeatRule {
             baseDate.month + monthOffset,
           );
           for (final day in days!) {
-            if (day > 0 &&
-                day <= DateTime(nextMonth.year, nextMonth.month + 1, 0).day) {
+            final lastDayOfMonth =
+                DateTime(nextMonth.year, nextMonth.month + 1, 0).day;
+            final effectiveDay = (day == -1) ? lastDayOfMonth : day;
+
+            if (effectiveDay > 0 && effectiveDay <= lastDayOfMonth) {
               final candidate = applyTime(
-                DateTime(nextMonth.year, nextMonth.month, day),
+                DateTime(nextMonth.year, nextMonth.month, effectiveDay),
               );
               if (candidate.isAfter(baseDate)) {
                 upcomingDates.add(candidate);
@@ -182,44 +182,34 @@ class RepeatRule {
     }
   }
 
-  String get formatRepeatRule {
-    final timeStr =
-        (time != null)
-            ? ' at ${DateFormat('h:mm a').format(DateFormat('HH:mm').parse(time!))}'
-            : '';
-    final startStr =
-        startDate != null
-            ? ', starting ${DateFormat.yMMMd().format(startDate!)}'
-            : '';
-    final endStr =
-        (endDate != null)
-            ? ', until ${DateFormat.yMMMd().format(endDate!)}'
-            : '';
-
+  String get shortFormatRepeatRule {
     switch (frequency) {
       case 'daily':
         final intervalPart =
             interval == 1 ? 'Every day' : 'Every $interval days';
-        return '$intervalPart$timeStr$startStr$endStr'.trim();
+        return intervalPart;
 
       case 'weekly':
-        final days = weekdays
-            ?.map((d) => DateFormat.E().format(nextWeekdayDate(d)))
-            .join(', ');
+        final days = formatWeekdays(weekdays ?? []);
         final intervalPart =
-            interval == 1 ? 'Every week' : 'Every $interval weeks';
-        final daysPart = (days != null && days.isNotEmpty) ? ' on $days' : '';
-        return '$intervalPart$daysPart$timeStr$startStr$endStr'.trim();
+            interval == 1 ? 'Every' : 'Every $interval weeks on';
+        final daysPart = (days.isNotEmpty) ? days : '';
+        return '$intervalPart $daysPart'.trim();
 
       case 'monthly':
         final dayList = days?.map((d) => ordinal(d)).join(', ') ?? '';
         final intervalPart =
-            interval == 1 ? 'Every month' : 'Every $interval months';
-        final daysPart = dayList.isNotEmpty ? ' on the $dayList' : '';
-        return '$intervalPart$daysPart$timeStr$startStr$endStr'.trim();
+            interval == 1 ? 'Every' : 'Every $interval months on the';
+        final daysPart = dayList.isNotEmpty ? dayList : '';
+        return '$intervalPart $daysPart'.trim();
 
       default:
         return '';
     }
+  }
+
+  String get longFormatRepeatRule {
+    final rangeStr = formatRange(startDate, endDate);
+    return shortFormatRepeatRule + rangeStr;
   }
 }

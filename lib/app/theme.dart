@@ -10,11 +10,14 @@ class AppTheme {
     colorScheme: ColorScheme(
       brightness: Brightness.light,
       primary: AppColors.primary,
+      primaryFixedDim: AppColors.primaryDim,
       onPrimary: AppColors.surface,
-      secondary: Colors.orangeAccent,
+      secondary: AppColors.secondary,
       onSecondary: AppColors.surface,
       error: AppColors.error,
       onError: AppColors.surface,
+      errorContainer: AppColors.errorContainer,
+      onErrorContainer: AppColors.surface,
       surface: AppColors.surface,
       onSurface: AppColors.onSurface,
       onSurfaceVariant: AppColors.hint,
@@ -23,23 +26,23 @@ class AppTheme {
     ),
 
     textTheme: GoogleFonts.openSansTextTheme().copyWith(
-      displayLarge: GoogleFonts.ptSans(
-        color: AppColors.primary,
+      displayLarge: GoogleFonts.inter(
+        color: AppColors.onSurface,
         fontSize: 48,
         fontWeight: AppFontWeights.extrabold,
       ),
       displayMedium: GoogleFonts.ptSans(
         color: AppColors.hint,
         fontSize: 36,
-        fontWeight: AppFontWeights.extrabold,
+        fontWeight: AppFontWeights.semibold,
       ),
-      headlineLarge: GoogleFonts.ptSans(
+      headlineLarge: GoogleFonts.inter(
         // Topbar
         color: AppColors.onSurface,
-        fontSize: 36,
+        fontSize: 28,
         fontWeight: AppFontWeights.extrabold,
       ),
-      headlineSmall: GoogleFonts.openSans(
+      headlineSmall: GoogleFonts.inter(
         // Topbar
         color: AppColors.hint,
         fontSize: AppFontSizes.md,

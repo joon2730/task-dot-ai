@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:tasket/provider/service_provider.dart';
-import 'package:tasket/widget/bar/snackbar.dart';
 import 'package:tasket/screen/home.dart';
 import 'package:tasket/screen/login.dart';
 
@@ -24,9 +23,6 @@ class Root extends HookConsumerWidget {
       child: userAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(topSnackbar("Authentication failed."));
           return const LoginScreen(key: ValueKey('login'));
         },
         data: (user) {

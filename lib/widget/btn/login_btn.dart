@@ -4,14 +4,14 @@ class LoginButton extends StatelessWidget {
   final Color backgroundColor;
   final Icon icon;
   final Text text;
-  final Function loginMethod;
+  final VoidCallback onPressed;
 
   const LoginButton({
     super.key,
     required this.text,
     required this.icon,
     required this.backgroundColor,
-    required this.loginMethod,
+    required this.onPressed,
   });
 
   @override
@@ -25,7 +25,7 @@ class LoginButton extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             backgroundColor: backgroundColor,
           ),
-          onPressed: () => loginMethod(),
+          onPressed: onPressed,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

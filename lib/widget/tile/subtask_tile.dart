@@ -30,51 +30,64 @@ class _SubtaskTileState extends State<SubtaskTile> {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
                   children: [
                     SizedBox(
                       width: 14,
-                      child: Icon(
-                        Icons.circle,
-                        size: 6,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      child: Transform.translate(
+                        offset: Offset(0, -4),
+                        child: Icon(
+                          Icons.circle,
+                          size: 6,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                     SizedBox(width: 8),
-                    Text(
-                      widget.subtask.title,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        decoration:
-                            isCompleted
-                                ? TextDecoration.lineThrough
-                                : TextDecoration.none,
-                        color:
-                            isCompleted
-                                ? Theme.of(context).colorScheme.onSurfaceVariant
-                                : Theme.of(context).textTheme.bodyLarge?.color,
+                    Expanded(
+                      child: Text(
+                        widget.subtask.title,
+                        softWrap: true,
+                        overflow: TextOverflow.visible,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          decoration:
+                              isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                          color:
+                              isCompleted
+                                  ? Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant
+                                  : Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.color,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(
-                  width: 28,
-                  child: CheckButton(
-                    isChecked: isCompleted,
-                    onChanged: (isChecked) {
-                      setState(() {
-                        isCompleted = isChecked;
-                      });
-                      widget.subtask.isCompleted = isChecked;
-                      widget.onChanged?.call(isChecked);
-                    },
-                    size: 28,
-                  ),
-                ),
               ],
+            ),
+          ),
+          SizedBox(
+            width: 28,
+            child: CheckButton(
+              isChecked: isCompleted,
+              onChanged: (isChecked) {
+                setState(() {
+                  isCompleted = isChecked;
+                });
+                widget.subtask.isCompleted = isChecked;
+                widget.onChanged?.call(isChecked);
+              },
+              size: 28,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],

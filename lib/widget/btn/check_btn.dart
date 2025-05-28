@@ -5,10 +5,12 @@ class CheckButton extends StatelessWidget {
   final ValueChanged<bool>? onChanged;
   final double? size;
   final bool isChecked;
+  final Color color;
 
   const CheckButton({
     super.key,
     required this.isChecked,
+    required this.color,
     this.onChanged,
     this.size,
   });
@@ -27,7 +29,7 @@ class CheckButton extends StatelessWidget {
               ? Symbols.radio_button_checked
               : Symbols.radio_button_unchecked,
           key: ValueKey(isChecked),
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          color: color,
           size: size ?? 28,
           weight: 800,
         ),

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
-// import 'package:tasket/app/constants.dart';
-// import 'package:tasket/provider/service_provider.dart';
 import 'package:tasket/model/task.dart';
 import 'package:tasket/provider/task_provider.dart';
+import 'package:tasket/provider/focus_node_provider.dart';
 import 'package:tasket/widget/list_view/subtask_list_view.dart';
 import 'package:tasket/widget/btn/check_btn.dart';
 import 'package:tasket/widget/label/icon_label.dart';
@@ -15,14 +15,15 @@ import 'package:tasket/widget/label/box_label.dart';
 
 class TaskTile extends HookConsumerWidget {
   final Task task;
-  final VoidCallback onComplete;
 
-  const TaskTile({super.key, required this.task, required this.onComplete});
+  const TaskTile({super.key, required this.task});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final task = this.task;
+    final selectedTask = ref.watch(selectedTaskProvider);
     final expanded = useState(false);
-    final toRemove = useState(false);
+    final toComplete = useState(false);
     final update = useState(0);
     final controller = useAnimationController(
       duration: const Duration(milliseconds: 300),
@@ -31,41 +32,37 @@ class TaskTile extends HookConsumerWidget {
       parent: controller,
       curve: Curves.easeInOut,
     );
-    final task = this.task;
+    expanded.value =
+        expanded.value ||
+        (task.isNew || task.isUpdated || selectedTask?.id == task.id);
 
     useEffect(() {
-      final selected = (ref.read(selectedTaskProvider)?.id == task.id);
-      if (selected || task.isNew || task.isUpdated) {
-        expanded.value = true;
-      } else {
-        expanded.value = false;
-      }
       if (expanded.value) {
         controller.forward();
       } else {
         controller.reverse();
       }
       return null;
-    }, [ref.watch(selectedTaskProvider)]);
+    }, [expanded.value]);
 
     useEffect(() {
-      if (toRemove.value) {
+      if (toComplete.value) {
         Future.delayed(const Duration(seconds: 1), () {
           if (context.mounted) {
-            if (!toRemove.value) return;
+            if (!toComplete.value) return;
             if (ref.read(selectedTaskProvider)?.id == task.id) {
               ref.read(selectedTaskProvider.notifier).state = null;
             }
-            onComplete();
+            ref.read(taskProvider.notifier).completeTask(task);
           }
         });
       }
       return null;
-    }, [toRemove.value]);
+    }, [toComplete.value]);
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 400),
-      opacity: (toRemove.value) ? 0.4 : 1.0,
+      opacity: (toComplete.value) ? 0.4 : 1.0,
       child: Container(
         decoration: const BoxDecoration(
           border: Border(
@@ -82,126 +79,190 @@ class TaskTile extends HookConsumerWidget {
               onTap: () {
                 task.isNew = false;
                 task.isUpdated = false;
-                if (ref.read(selectedTaskProvider)?.id == task.id) {
-                  ref.read(selectedTaskProvider.notifier).state = null;
-                } else {
-                  ref.read(selectedTaskProvider.notifier).state = task;
-                }
+                FocusManager.instance.primaryFocus?.unfocus();
+                expanded.value = !expanded.value;
+                ref.read(selectedTaskProvider.notifier).state = null;
               },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                color:
-                    (ref.read(selectedTaskProvider)?.id == task.id)
-                        ? Theme.of(context).colorScheme.surfaceDim
-                        : Theme.of(context).colorScheme.surface,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: Slidable(
+                key: ValueKey(task.id),
+                startActionPane: ActionPane(
+                  motion: const DrawerMotion(),
+                  extentRatio: 0.2,
                   children: [
-                    CheckButton(
-                      size: 28,
-                      isChecked: toRemove.value,
-                      onChanged: (isChecked) {
-                        toRemove.value = isChecked;
+                    SlidableAction(
+                      onPressed: (context) {
+                        if (ref.read(selectedTaskProvider)?.id == task.id) {
+                          ref.read(selectedTaskProvider.notifier).state = null;
+                        }
+                        ref.read(taskProvider.notifier).deleteTask(task);
                       },
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      icon: Symbols.cancel,
                     ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
+                  ],
+                ),
+                endActionPane: ActionPane(
+                  motion: const DrawerMotion(),
+                  extentRatio: 0.2,
+                  children: [
+                    SlidableAction(
+                      onPressed: (context) {
+                        if (ref.read(selectedTaskProvider)?.id == task.id) {
+                          ref.read(selectedTaskProvider.notifier).state = null;
+                        } else {
+                          ref.read(selectedTaskProvider.notifier).state = task;
+                          ref.read(inputBoxFocusNodeProvider).requestFocus();
+                        }
+                      },
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      icon: Symbols.edit,
+                      // label: 'Edit',
+                    ),
+                  ],
+                ),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  color: Theme.of(context).colorScheme.surface,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CheckButton(
+                        size: 28,
+                        isChecked: toComplete.value,
+                        onChanged: (isChecked) {
+                          toComplete.value = isChecked;
+                        },
+                        color: Theme.of(context).colorScheme.primaryFixedDim,
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                AnimatedSize(
+                                  duration: const Duration(milliseconds: 200),
+                                  curve: Curves.easeInCirc,
+                                  alignment: Alignment.topLeft,
+                                  child: Text(
+                                    task.title,
+                                    softWrap: true,
+                                    overflow:
+                                        expanded.value
+                                            ? TextOverflow.visible
+                                            : TextOverflow.ellipsis,
+                                    maxLines: expanded.value ? null : 2,
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ),
+                                if (task.isNew) ...[
+                                  SizedBox(width: 6),
+                                  BoxLabel(
+                                    Text(
+                                      "new",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                ],
+                                if (task.isUpdated) ...[
+                                  SizedBox(width: 6),
+                                  BoxLabel(
+                                    Text(
+                                      "edited",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    color:
+                                        Theme.of(context).colorScheme.secondary,
+                                  ),
+                                ],
+                                if (ref.read(selectedTaskProvider)?.id ==
+                                    task.id) ...[
+                                  SizedBox(width: 6),
+                                  Icon(
+                                    Symbols.edit,
+                                    color:
+                                        Theme.of(context).colorScheme.secondary,
+                                    size: 22,
+                                    weight: 600,
+                                  ),
+                                  Icon(
+                                    Symbols.close,
+                                    color:
+                                        Theme.of(context).colorScheme.secondary,
+                                    size: 14,
+                                    weight: 900,
+                                  ),
+                                ],
+                                if (task.subtasks != null) ...[
+                                  SizedBox(width: 2),
+                                  Icon(
+                                    Symbols.keyboard_arrow_down_rounded,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    size: 16,
+                                    weight: 600,
+                                  ),
+                                ],
+                              ],
+                            ),
+                            if (task.note != null) ...[
                               AnimatedSize(
                                 duration: const Duration(milliseconds: 200),
                                 curve: Curves.easeInCirc,
                                 alignment: Alignment.topLeft,
                                 child: Text(
-                                  task.title,
-                                  softWrap: true,
+                                  task.note!,
+                                  maxLines: expanded.value ? null : 1,
                                   overflow:
                                       expanded.value
                                           ? TextOverflow.visible
                                           : TextOverflow.ellipsis,
-                                  maxLines: expanded.value ? null : 2,
-                                  style:
-                                      Theme.of(context).textTheme.titleMedium,
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ),
-                              if (task.isNew) ...[
-                                SizedBox(width: 6),
-                                BoxLabel(
-                                  Text(
-                                    "new",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  color: const Color(0xFFFFAB00),
-                                ),
-                              ],
-                              if (task.isUpdated) ...[
-                                SizedBox(width: 6),
-                                BoxLabel(
-                                  Text(
-                                    "edited",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  color: Colors.deepOrange,
-                                ),
-                              ],
                             ],
-                          ),
-                          if (task.note != null) ...[
-                            AnimatedSize(
-                              duration: const Duration(milliseconds: 200),
-                              curve: Curves.easeInCirc,
-                              alignment: Alignment.topLeft,
-                              child: Text(
-                                task.note!,
-                                maxLines: expanded.value ? null : 1,
-                                overflow:
-                                    expanded.value
-                                        ? TextOverflow.visible
-                                        : TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall,
+                            if (task.subtasks != null &&
+                                task.subtasks!.isNotEmpty)
+                              IconLabel(
+                                icon: Symbols.format_list_bulleted,
+                                text:
+                                    "${task.uncompletedSubtasksCount} uncompleted",
                               ),
-                            ),
+                            if (task.repeat != null)
+                              IconLabel(
+                                icon: Symbols.autorenew,
+                                text:
+                                    (expanded.value)
+                                        ? task.repeat!.longFormatRepeatRule
+                                        : task.repeat!.shortFormatRepeatRule,
+                              ),
+                            if (task.dueOn != null)
+                              IconLabel(
+                                icon: Symbols.calendar_clock,
+                                text: task.displayFormatDueOn,
+                              ),
                           ],
-                          if (task.subtasks != null &&
-                              task.subtasks!.isNotEmpty)
-                            IconLabel(
-                              icon: Symbols.format_list_bulleted,
-                              text:
-                                  "${task.uncompletedSubtasksCount} uncompleted",
-                            ),
-                          if (task.repeat != null)
-                            IconLabel(
-                              icon: Symbols.autorenew,
-                              text: task.repeat!.formatRepeatRule,
-                            ),
-                          if (task.dueOn != null)
-                            IconLabel(
-                              icon: Symbols.calendar_clock,
-                              text:
-                                  (expanded.value)
-                                      ? '${task.formalFormatDueOn} | ${task.formatDueIn}'
-                                      : '${task.readableFormatDueOn} | ${task.formatDueIn}',
-                            ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -236,7 +297,7 @@ class TaskTile extends HookConsumerWidget {
                                 // handle task completion
                                 final isCompleted =
                                     completedCounter == task.subtasks!.length;
-                                toRemove.value = isCompleted;
+                                toComplete.value = isCompleted;
                               },
                             ),
                           ),

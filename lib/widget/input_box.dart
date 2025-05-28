@@ -7,6 +7,8 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:tasket/model/task.dart';
 import 'package:tasket/provider/task_provider.dart';
 import 'package:tasket/provider/service_provider.dart';
+import 'package:tasket/provider/focus_node_provider.dart';
+import 'package:tasket/util/exception.dart';
 
 class InputBox extends HookConsumerWidget {
   const InputBox({super.key});
@@ -14,7 +16,7 @@ class InputBox extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = useTextEditingController();
-    final focusNode = useFocusNode();
+    final focusNode = ref.watch(inputBoxFocusNodeProvider);
     final height = MediaQuery.of(context).size.height;
     final isInputEmpty = useState(true);
     final isLoading = useState(false);
@@ -25,31 +27,40 @@ class InputBox extends HookConsumerWidget {
       final inputText = controller.text;
       FocusScope.of(context).unfocus();
       isLoading.value = true;
-
-      if (ref.read(selectedTaskProvider) == null) {
-        // generate new task
-        final output = await ref.read(aiServiceProvider).createTasks(inputText);
-        // create task (no id given)
-        final List<Task> tasks =
-            output.map((json) => Task.create(json)).toList();
-        // save task (id registered, stored in db)
-        for (final task in tasks) {
-          ref.read(taskProvider.notifier).createTask(task);
+      try {
+        if (ref.read(selectedTaskProvider) == null) {
+          // generate new task
+          final output = await ref
+              .read(aiServiceProvider)!
+              .createTasks(inputText);
+          // create task (no id given)
+          final List<Task> tasks =
+              output.map((json) => Task.create(json)).toList();
+          // save task (id registered, stored in db)
+          for (final task in tasks) {
+            ref.read(taskProvider.notifier).createTask(task);
+          }
+        } else {
+          // generate update
+          final output = await ref
+              .read(aiServiceProvider)!
+              .updateTask(inputText, ref.read(selectedTaskProvider).toString());
+          // update task
+          for (final json in output) {
+            ref.read(selectedTaskProvider)!.update(json); // to fix later.
+          }
+          // save update
+          ref
+              .read(taskProvider.notifier)
+              .updateTask(ref.read(selectedTaskProvider)!);
         }
-      } else {
-        // generate update
-        final output = await ref
-            .read(aiServiceProvider)
-            .updateTask(inputText, ref.read(selectedTaskProvider).toString());
-        // update task
-        ref.read(selectedTaskProvider)!.update(output[0]); // to fix later.
-        // save update
-        ref
-            .read(taskProvider.notifier)
-            .updateTask(ref.read(selectedTaskProvider)!);
-        // unselect
-        ref.read(selectedTaskProvider.notifier).state = null;
+      } catch (e, _) {
+        if (context.mounted) {
+          handleException(context, e);
+        }
       }
+      // unselect
+      ref.read(selectedTaskProvider.notifier).state = null;
       controller.clear();
       isInputEmpty.value = true;
       isLoading.value = false;
@@ -62,7 +73,7 @@ class InputBox extends HookConsumerWidget {
 
       focusNode.addListener(listener);
       return () => focusNode.removeListener(listener);
-    }, [focusNode]);
+    }, []);
 
     useEffect(() {
       if (ref.read(selectedTaskProvider) == null) {
@@ -132,8 +143,34 @@ class InputBox extends HookConsumerWidget {
                 SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    if (!isInputEmpty.value) ...[
+                      TextButton(
+                        onPressed:
+                            isInputEmpty.value
+                                ? null
+                                : () {
+                                  controller.clear();
+                                  isInputEmpty.value = true;
+                                },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size(36, 36),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          'Clear',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                    ],
                     ElevatedButton(
                       onPressed:
                           (!isInputEmpty.value && !isLoading.value)
@@ -151,7 +188,9 @@ class InputBox extends HookConsumerWidget {
                         backgroundColor:
                             (isInputEmpty.value)
                                 ? Theme.of(context).colorScheme.onSurfaceVariant
-                                : Theme.of(context).colorScheme.primary,
+                                : (inputAction.value == 'create')
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.secondary,
                         foregroundColor:
                             Theme.of(context).colorScheme.onPrimary,
                         elevation: 2,

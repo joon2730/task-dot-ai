@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:flutter/foundation.dart';
 
 import 'package:intl/intl.dart';
 
@@ -20,7 +19,6 @@ class Task {
   // not saved to db
   bool isNew;
   bool isUpdated;
-  bool inList;
   bool isCompleted;
   final Map<String, bool> _isFieldModified = {};
 
@@ -37,7 +35,6 @@ class Task {
     this.isCompleted = false,
     this.isNew = false,
     this.isUpdated = false,
-    this.inList = true, // for listview
   }) : _id = id,
        _title = title,
        _note = note,
@@ -62,7 +59,10 @@ class Task {
               : DateTime.now(),
       dueOn: json['dueOn']?.toDate().toLocal(),
       hasTime: json['hasTime'] as bool?,
-      note: json['note'],
+      note:
+          ((json['note'] as String?)?.trim().isEmpty ?? true)
+              ? null
+              : (json['note'] as String).trim(),
       subtasks:
           (json['subtasks'] as List?)?.map((e) => Subtask.fromJson(e)).toList(),
       repeat:
@@ -108,11 +108,14 @@ class Task {
     if (dueOnRaw != null && dueOnRaw is String) {
       dueOn = DateTime.tryParse(dueOnRaw); // if null delete dueOn field
       hasTime = dueOnRaw.contains('T') && dueOnRaw.length > 10;
+      repeat = null;
     }
 
     final subtasksRaw = json['subtasks'];
     if (subtasksRaw != null) {
-      if (subtasksRaw is List && subtasksRaw.every((e) => e is String)) {
+      if (subtasksRaw is List &&
+          subtasksRaw.every((e) => e is String) &&
+          subtasksRaw.isNotEmpty) {
         final patch =
             List<String>.from(
               subtasksRaw,
@@ -152,7 +155,8 @@ class Task {
     List<Subtask>? subtasks;
     final subtasksRaw = json['subtasks'];
     if (subtasksRaw != null) {
-      if (subtasksRaw is List && subtasksRaw.every((e) => e is String)) {
+      if (subtasksRaw is List &&
+          subtasksRaw.every((e) => e is String && subtasksRaw.isNotEmpty)) {
         subtasks =
             List<String>.from(
               subtasksRaw,
@@ -175,7 +179,6 @@ class Task {
       subtasks: subtasks,
       repeat: repeat,
       isNew: true,
-      inList: false,
     );
   }
 
@@ -206,6 +209,7 @@ class Task {
     final isPast = dueIn!.isNegative;
     final format = readableTimeDelta(dueOn!, hasTime!);
 
+    if (format == 'now') return 'now';
     return isPast ? '$format overdue' : 'in $format';
   }
 
@@ -214,10 +218,10 @@ class Task {
     return formatDateTime(dueOn!, hasTime!);
   }
 
-  String get readableFormatDueOn {
+  String get displayFormatDueOn {
     if (dueOn == null) return '';
     final time = hasTime! ? DateFormat('h:mm a').format(dueOn!) : '';
-    return '${readableDayLabel(dueOn!)}${hasTime! ? ', $time' : ''}';
+    return '${readableDate(dueOn!)}${hasTime! ? ' • $time' : ''} | $formatDueIn';
   }
 
   String get formalFormatDueOn {
