@@ -49,7 +49,7 @@ Public App Store launch in **June 2025**
 
 ---
 
-## 🛠️ Upcoming Features
+## Upcoming Features
 
 - Notification scheduling and reminders  
 - Google Calendar integration  
@@ -58,13 +58,13 @@ Public App Store launch in **June 2025**
 
 ---
 
-## 🧠 Design Philosophy
+## Design Philosophy
 
 > **Tasket is built to minimize friction.**  
 > Instead of manually entering task details, users can simply write in their own words — and Tasket takes care of structuring, categorizing, and scheduling.
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License**.
