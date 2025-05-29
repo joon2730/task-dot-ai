@@ -1,4 +1,4 @@
-# ✅ Tasket – AI-Powered ToDo & Reminder App
+# Tasket – AI-Powered ToDo & Reminder App
 
 **Tasket** is a lightweight, AI-assisted task and reminder app designed to help users quickly capture and structure their thoughts. Whether it's a to-do item, recurring event, or shopping list, Tasket automatically organizes tasks with due dates, checklists, and repeat rules — all from natural language input.
 
@@ -6,7 +6,7 @@ Currently in beta via **TestFlight**. App Store release scheduled for **June 202
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 - **Natural Language Input**  
   Type tasks as you would say them — e.g., “Pick up groceries every Friday” — and Tasket handles the rest.
@@ -28,7 +28,7 @@ Currently in beta via **TestFlight**. App Store release scheduled for **June 202
 
 ---
 
-## 🔧 Tech Stack
+## Tech Stack
 
 - **Flutter** – Cross-platform UI toolkit
 - **Riverpod + Flutter Hooks** – State and lifecycle management
@@ -38,23 +38,21 @@ Currently in beta via **TestFlight**. App Store release scheduled for **June 202
 
 ---
 
-## 🚀 Get Started
+## Get Started
 
 Tasket is currently in beta and available for iOS through TestFlight:
 
 > 📱 [**Join the TestFlight Beta**](https://testflight.apple.com/join/AZ1j4xF1)  
 > *(Requires TestFlight app installed on your iPhone)*
 
-📅 Public App Store launch: **June 2025**
+Public App Store launch in **June 2025**
 
 ---
 
 ## 🛠️ Upcoming Features
 
-- Calendar view with date-based navigation  
 - Notification scheduling and reminders  
 - Google Calendar integration  
-- Offline access  
 - Undo history  
 - Pro plan with voice input and increased limits
 
