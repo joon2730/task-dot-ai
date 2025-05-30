@@ -1,0 +1,57 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "fir-flutter-codelab-d2972",
+          "appId": "1:375153892072:android:5c264d5d38f24227c1875d",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "fir-flutter-codelab-d2972",
+          "appId": "1:375153892072:ios:edce5956a8d264c6c1875d",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "fir-flutter-codelab-d2972",
+          "appId": "1:375153892072:ios:edce5956a8d264c6c1875d",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "fir-flutter-codelab-d2972",
+          "configurations": {
+            "android": "1:375153892072:android:5c264d5d38f24227c1875d",
+            "ios": "1:375153892072:ios:edce5956a8d264c6c1875d",
+            "macos": "1:375153892072:ios:edce5956a8d264c6c1875d",
+            "web": "1:375153892072:web:afd9e52b1242036dc1875d",
+            "windows": "1:375153892072:web:524e0cbdd846a859c1875d"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "venv",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint"
+      ]
+    }
+  ]
+}
