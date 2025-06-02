@@ -137,7 +137,16 @@ class TaskTile extends HookConsumerWidget {
                         onChanged: (isChecked) {
                           toComplete.value = isChecked;
                         },
-                        color: Theme.of(context).colorScheme.primaryFixedDim,
+                        color:
+                            (task.priority == 0)
+                                ? Theme.of(context).colorScheme.primaryFixedDim
+                                : (task.priority == 1)
+                                ? Theme.of(
+                                  context,
+                                ).colorScheme.secondaryFixedDim
+                                : Theme.of(
+                                  context,
+                                ).colorScheme.tertiaryFixedDim,
                       ),
                       SizedBox(width: 12),
                       Expanded(

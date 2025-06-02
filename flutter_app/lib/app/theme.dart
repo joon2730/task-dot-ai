@@ -13,7 +13,11 @@ class AppTheme {
       primaryFixedDim: AppColors.primaryDim,
       onPrimary: AppColors.surface,
       secondary: AppColors.secondary,
+      secondaryFixedDim: AppColors.secondaryDim,
       onSecondary: AppColors.surface,
+      tertiary: AppColors.tertiary,
+      tertiaryFixedDim: AppColors.tertiary,
+      onTertiary: AppColors.surface,
       error: AppColors.error,
       onError: AppColors.surface,
       errorContainer: AppColors.errorContainer,
@@ -36,28 +40,34 @@ class AppTheme {
         fontSize: 36,
         fontWeight: AppFontWeights.semibold,
       ),
-      headlineLarge: GoogleFonts.inter(
+      headlineLarge: GoogleFonts.openSans(
         // Topbar
         color: AppColors.onSurface,
         fontSize: 28,
         fontWeight: AppFontWeights.extrabold,
       ),
-      headlineSmall: GoogleFonts.inter(
+      headlineSmall: GoogleFonts.openSans(
         // Topbar
         color: AppColors.hint,
-        fontSize: AppFontSizes.md,
+        fontSize: AppFontSizes.lg,
         fontWeight: AppFontWeights.semibold,
+      ),
+      labelMedium: GoogleFonts.openSans(
+        // Task tile title
+        color: AppColors.hint,
+        fontSize: AppFontSizes.md,
+        fontWeight: AppFontWeights.bold,
       ),
       titleMedium: GoogleFonts.openSans(
         // Task tile title
         color: AppColors.onSurface,
-        fontSize: AppFontSizes.md,
+        fontSize: AppFontSizes.lg,
         fontWeight: AppFontWeights.bold,
       ),
       titleSmall: GoogleFonts.openSans(
         // Task tile metadata label (due date...)
         color: AppColors.onSurface,
-        fontSize: AppFontSizes.xs,
+        fontSize: AppFontSizes.sm,
         fontWeight: AppFontWeights.semibold,
       ),
       bodyLarge: GoogleFonts.openSans(

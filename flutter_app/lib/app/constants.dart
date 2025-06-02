@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 final class AppColors {
   static const primary = Color(0xFFFF5274); // Color(0xFF43A047)
   static const primaryDim = Color(0xDDFF5274); // Color(0xFF43A047)
-  static const secondary = Color(0xFF787878); // FF9800
+  static const secondary = Color(0xFFAF2010);
+  static const secondaryDim = Color(0xDDAF2010);
+  static const tertiary = Color(0xFFFFD532);
+  static const tertiaryDim = Color(0xFFFFD532);
   static const surface = Color(0xFEFEFEFE);
   static const onSurface = Color(0xFF000000);
-  static const error = Color(0xFFFF3030);
-  static const hint = Color(0xFF888888);
+  static const error = Color(0xFFFF2020);
+  static const hint = Color(0xFF787878);
   static const shadow = Color(0xFFCBCBCB);
   static const faint = Color(0xFFBCBCBC);
   static const focused = Color(0xFFBCBCBC);

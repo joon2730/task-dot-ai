@@ -101,6 +101,7 @@ class AIService {
     final response = await _updateTaskModel.generateContent([
       Content.text({"input": prompt, "target": taskJson}.toString()),
     ]);
+    // print(DateTime.now().toIso8601String());
     print(response.text);
 
     if (response.text == null) {

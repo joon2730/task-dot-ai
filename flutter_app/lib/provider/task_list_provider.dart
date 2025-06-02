@@ -1,25 +1,7 @@
-import 'package:flutter/material.dart';
-
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:tasket/model/task.dart';
 import 'package:tasket/model/task_list.dart';
-import 'package:tasket/widget/tile/task_tile.dart';
-
-Widget removedTaskBuilder(
-  Task removedTask,
-  BuildContext context,
-  Animation<double> animation,
-) {
-  return SizeTransition(
-    sizeFactor: animation,
-    child: TaskTile(task: removedTask),
-  );
-}
-
-final listKeyProvider = Provider<GlobalKey<AnimatedListState>>((ref) {
-  return GlobalKey<AnimatedListState>();
-});
 
 // Our Notifier that reacts to changes in counterProvider
 class TaskListNotifier extends Notifier<TaskList?> {
@@ -29,22 +11,25 @@ class TaskListNotifier extends Notifier<TaskList?> {
   }
 
   void initialize(List<Task> tasks) {
-    state = TaskList(
-      listKey: ref.watch(listKeyProvider),
-      removedTaskBuilder: removedTaskBuilder,
-      initialTasks: tasks..sort((a, b) => a.compareTo(b, method: 'auto')),
-    );
+    state = TaskList.initiate(tasks: tasks);
   }
 
   void insertTask(Task task) {
     if (state != null) {
-      state!.insertAt(0, task);
+      state = state!.insert(task);
     }
   }
 
   void removeTask(Task task) {
     if (state != null) {
-      state!.removeAt(state!.indexOf(task));
+      state = state!.remove(task);
+    }
+  }
+
+  void updateTask(Task task) {
+    if (state != null) {
+      final newState = state!.update(task);
+      if (newState != null) state = newState;
     }
   }
 }

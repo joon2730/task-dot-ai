@@ -1,4 +1,4 @@
-import 'package:firebase_vertexai/firebase_vertexai.dart';
+// import 'package:firebase_vertexai/firebase_vertexai.dart';
 
 final taskCreatePrompt = """
 You are an expert task manager.
@@ -24,6 +24,7 @@ Instructions (step by step):
        "startDate": "<YYYY-MM-DD>",               // optional, if repetition is limited to some months
        "endDate": "<YYYY-MM-DD>"
      },
+     "priority": -1|1,                            // optional; only include if not 0 (default)
      "note": "<string>"                          // extra details, omit if none
    }
 
@@ -32,6 +33,7 @@ Field usage:
 - subtasks: checklist actionable steps only, no dates or descriptions.
 - dueOn: date or datetime only if explicitly mentioned.
 - repeat: only if user states repetition; include all relevant keys.
+- priority: -1 = low, 0 = normal (default), 1 = top; infer based on urgency or keywords like "important", "low priority", etc.; omit if 0.
 - note: any other descriptive/contextual info; use '\\n' for newlines.
 
 Output requirements:
@@ -73,6 +75,7 @@ Field usage:
     "startDate": "<YYYY-MM-DD>",         // optional
     "endDate": "<YYYY-MM-DD>"
   }
+- priority: update if urgency changes; use -1 for low, 0 for normal, 1 for top; set to null if priority removed.
 - note: any extra descriptive or contextual info; use '\\n' for newlines.
 
 Output requirements:
@@ -112,7 +115,7 @@ Output requirements:
 //       'endDate',
 //     ],
 //   ),
-// };
+// });
 
 // final taskCreateSchema = Schema.array(
 //   items: Schema.object(

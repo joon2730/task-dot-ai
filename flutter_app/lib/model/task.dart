@@ -4,9 +4,10 @@ import 'package:intl/intl.dart';
 
 import 'package:tasket/model/subtask.dart';
 import 'package:tasket/model/repeat.dart';
+import 'package:tasket/model/list_item.dart';
 import 'package:tasket/util/format.dart';
 
-class Task {
+class Task extends ListItem {
   String title;
   String? id;
   String? note;
@@ -16,6 +17,7 @@ class Task {
   List<Subtask>? subtasks;
   DateTime createdAt;
   DateTime updatedAt;
+  int priority; // top: 1 | normal: 0 | low: -1
   // not saved to db
   bool isNew;
   bool isUpdated;
@@ -32,6 +34,7 @@ class Task {
     this.isCompleted = false,
     this.isNew = false,
     this.isUpdated = false,
+    this.priority = 0,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : createdAt = createdAt ?? DateTime.now(),
@@ -49,18 +52,16 @@ class Task {
           (json['updatedAt'] is Timestamp)
               ? (json['updatedAt'] as Timestamp).toDate()
               : DateTime.now(),
-      dueOn: json['dueOn']?.toDate().toLocal(),
+      dueOn: (json['dueOn'] as Timestamp?)?.toDate().toLocal(),
       hasTime: json['hasTime'] as bool?,
-      note:
-          ((json['note'] as String?)?.trim().isEmpty ?? true)
-              ? null
-              : (json['note'] as String).trim(),
+      note: json['note'] as String?,
       subtasks:
           (json['subtasks'] as List?)?.map((e) => Subtask.fromJson(e)).toList(),
       repeat:
           (json['repeat'] != null)
               ? RepeatRule.fromStore(json['repeat'])
               : null,
+      priority: (json['priority'] != null) ? json['priority'] : 0,
     );
   }
 
@@ -95,22 +96,18 @@ class Task {
 
     DateTime? dueOn;
     bool? hasTime;
-    final dueRaw = json['dueOn'];
-    if (dueRaw != null && dueRaw is String) {
-      dueOn = DateTime.tryParse(dueRaw); // if null delete dueOn field
-      hasTime = dueRaw.contains('T') && dueRaw.length > 10;
+    if (json['dueOn'] != null && json['dueOn'] is String) {
+      dueOn = DateTime.tryParse(json['dueOn']); // if null delete dueOn field
+      hasTime = json['dueOn'].contains('T') && json['dueOn'].length > 10;
     }
 
     List<Subtask>? subtasks;
-    final subtasksRaw = json['subtasks'];
-    if (subtasksRaw != null) {
-      if (subtasksRaw is List &&
-          subtasksRaw.every((e) => e is String && subtasksRaw.isNotEmpty)) {
-        subtasks =
-            List<String>.from(
-              subtasksRaw,
-            ).map((title) => Subtask(title)).toList();
-      }
+    if (json['subtasks'] != null &&
+        json['subtasks'] is List &&
+        json['subtasks'].every(
+          (e) => e is String && json['subtasks'].isNotEmpty,
+        )) {
+      subtasks = json['subtasks'].map((title) => Subtask(title)).toList();
     }
 
     RepeatRule? repeat;
@@ -120,6 +117,8 @@ class Task {
       hasTime = repeat.time != null;
     }
 
+    int priority = (json['priority'] != null) ? json['priority'] : 0;
+
     return Task(
       title: title,
       note: note,
@@ -127,6 +126,7 @@ class Task {
       hasTime: hasTime,
       subtasks: subtasks,
       repeat: repeat,
+      priority: priority,
       isNew: true,
     );
   }
@@ -134,25 +134,26 @@ class Task {
   void update(Map<String, dynamic> json) {
     isUpdated = true;
 
-    title = json['title'] ?? title;
-    note = json['note'] ?? note;
+    title = json['title'] ?? title; // prevent null
 
-    final dueOnRaw = json['dueOn'];
-    if (dueOnRaw != null && dueOnRaw is String) {
-      dueOn = DateTime.tryParse(dueOnRaw); // if null delete dueOn field
-      hasTime = dueOnRaw.contains('T') && dueOnRaw.length > 10;
-      repeat = null;
+    if (json.containsKey('note')) note = json['note'];
+
+    if (json.containsKey('dueOn')) {
+      if (json['dueOn'] != null && json['dueOn'] is String) {
+        dueOn = DateTime.tryParse(json['dueOn']); // if null delete dueOn field
+        hasTime = json['dueOn'].contains('T') && json['dueOn'].length > 10;
+        repeat = null;
+      } else {
+        dueOn = null;
+      }
     }
 
-    final subtasksRaw = json['subtasks'];
-    if (subtasksRaw != null) {
-      if (subtasksRaw is List &&
-          subtasksRaw.every((e) => e is String) &&
-          subtasksRaw.isNotEmpty) {
-        final patch =
-            List<String>.from(
-              subtasksRaw,
-            ).map((title) => Subtask(title)).toList();
+    if (json.containsKey('subtasks')) {
+      if (json['subtasks'] != null &&
+          json['subtasks'] is List &&
+          json['subtasks'].every((e) => e is String) &&
+          json['subtasks'].isNotEmpty) {
+        final patch = json['subtasks'].map((title) => Subtask(title)).toList();
         if (subtasks == null) {
           subtasks = patch;
         } else {
@@ -161,14 +162,27 @@ class Task {
       }
     }
 
-    if (json['repeat'] != null) {
-      if (repeat != null) {
-        repeat!.update(json['repeat']);
+    if (json.containsKey('repeat')) {
+      if (json['repeat'] != null) {
+        if (repeat != null) {
+          repeat!.update(json['repeat']);
+        } else {
+          repeat = RepeatRule.create(json['repeat']); // deleted if null
+        }
+        dueOn = repeat!.getNextOccurrence(repeat!.startDate ?? DateTime.now());
+        hasTime = repeat!.time != null;
       } else {
-        repeat = RepeatRule.create(json['repeat']); // deleted if null
+        repeat = null;
       }
-      dueOn = repeat!.getNextOccurrence(repeat!.startDate ?? DateTime.now());
-      hasTime = repeat!.time != null;
+    }
+
+    if (json.containsKey('priority')) {
+      final val = json['priority'];
+      if (val == -1 || val == 1) {
+        priority = val;
+      } else if (val == 0) {
+        priority = 0;
+      }
     }
   }
 
@@ -225,22 +239,102 @@ class Task {
     return subtasks!.where((subtask) => subtask.isCompleted == false).length;
   }
 
-  int get priorityScore {
-    if (dueOn != null) {
-      // has due date
-      return 20160 - dueIn!.inMinutes; // 10080 = a week
+  int compareTo(
+    Task other, {
+    String method = 'date', // 'date' | 'priority'
+  }) {
+    if (method == 'date') {
+      if (dueOn == null && other.dueOn != null) return 1;
+      if (dueOn != null && other.dueOn == null) return -1;
+      if (dueOn != null && other.dueOn != null) {
+        final cmp = dueOn!.compareTo(other.dueOn!);
+        if (cmp != 0) return cmp;
+      }
+      // fall back to priority
+      if (priority != other.priority) {
+        return (priority > other.priority) ? -1 : 1;
+      }
+      // fall back to createdAt
+      return createdAt.compareTo(other.createdAt);
+    } else if (method == 'priority') {
+      if (priority != other.priority) {
+        return (priority > other.priority) ? -1 : 1;
+      }
+      // fall back to date
+      if (dueOn == null && other.dueOn != null) return 1;
+      if (dueOn != null && other.dueOn == null) return -1;
+      if (dueOn != null && other.dueOn != null) {
+        final cmp = dueOn!.compareTo(other.dueOn!);
+        if (cmp != 0) return cmp;
+      }
+      return createdAt.compareTo(other.createdAt);
+    }
+    // fall back to createdAt
+    return createdAt.compareTo(other.createdAt);
+  }
+
+  String get dateGroup {
+    if (dueOn == null) return 'Undated';
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+
+    final due = DateTime(dueOn!.year, dueOn!.month, dueOn!.day);
+
+    if (due.isBefore(today)) {
+      return 'Past Due';
+    } else if (due.isAtSameMomentAs(today)) {
+      return 'Today';
+    } else if (due.isAtSameMomentAs(tomorrow)) {
+      return 'Tomorrow';
+    }
+
+    final endOfWeek = today.add(
+      Duration(days: DateTime.sunday - today.weekday),
+    );
+    if (due.isBefore(endOfWeek.add(const Duration(days: 1)))) {
+      return 'This week';
+    }
+
+    final startOfNextWeek = endOfWeek.add(const Duration(days: 1));
+    final endOfNextWeek = startOfNextWeek.add(const Duration(days: 6));
+    if (!due.isBefore(startOfNextWeek) && !due.isAfter(endOfNextWeek)) {
+      return 'Next week';
+    }
+
+    final endOfMonth = DateTime(
+      today.year,
+      today.month + 1,
+      1,
+    ).subtract(const Duration(days: 1));
+    if (due.isBefore(endOfMonth.add(const Duration(days: 1)))) {
+      return 'This month';
+    }
+
+    final startOfNextMonth = DateTime(today.year, today.month + 1, 1);
+    final endOfNextMonth = DateTime(
+      today.year,
+      today.month + 2,
+      1,
+    ).subtract(const Duration(days: 1));
+    if (!due.isBefore(startOfNextMonth) && !due.isAfter(endOfNextMonth)) {
+      return 'Next month';
+    }
+
+    return 'Later';
+  }
+
+  String get priorityGroup {
+    if (priority == 1) {
+      return 'Top priority';
+    } else if (priority == -1) {
+      return 'Low priority';
     } else {
-      // No due date
-      return (age.inMinutes / (age.inHours % 6 + 1))
-          .round(); // resurface periodically
+      return 'Normal priority';
     }
   }
 
-  int compareTo(Task other, {String method = 'auto'}) {
-    switch (method) {
-      case 'auto':
-      default:
-        return other.priorityScore - priorityScore;
-    }
-  }
+  @override
+  Object get itemId => id!;
 }

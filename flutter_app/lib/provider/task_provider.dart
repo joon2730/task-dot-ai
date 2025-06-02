@@ -24,6 +24,7 @@ class TaskNotifier extends AsyncNotifier<int> {
   }
 
   void updateTask(Task task) {
+    ref.read(taskListProvider.notifier).updateTask(task);
     final dataSevice = ref.read(dataServiceProvider)!;
     dataSevice.updatetTask(task);
   }
@@ -32,6 +33,7 @@ class TaskNotifier extends AsyncNotifier<int> {
     ref.read(taskListProvider.notifier).removeTask(task);
     state = AsyncValue.data(state.value! - 1);
     final dataSevice = ref.read(dataServiceProvider)!;
+    dataSevice.deleteTask(task.id!);
     // handle repetition
     if (task.repeat != null) {
       final nextDue = task.repeat!.getNextOccurrence(
@@ -40,13 +42,9 @@ class TaskNotifier extends AsyncNotifier<int> {
       );
       if (nextDue != null) {
         task.dueOn = nextDue;
-        ref.read(taskListProvider.notifier).insertTask(task..isNew = true);
-        state = AsyncValue.data(state.value! + 1);
-        dataSevice.updatetTask(task);
-        return;
+        createTask(task..isNew = true);
       }
     }
-    dataSevice.deleteTask(task.id!);
   }
 
   void deleteTask(Task task) {

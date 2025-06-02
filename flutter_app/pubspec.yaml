@@ -27,6 +27,8 @@ dependencies:
   material_symbols_icons: ^4.2719.2
   firebase_vertexai: ^1.6.0
   flutter_slidable: ^4.0.0
+  implicitly_animated_reorderable_list_2: ^0.6.0
+  material_segmented_control: ^5.0.1
   # smooth_page_indicator: ^1.2.1
 
   # utils
